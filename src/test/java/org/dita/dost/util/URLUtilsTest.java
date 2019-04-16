@@ -251,4 +251,13 @@ public class URLUtilsTest {
         } catch (final NullPointerException e) {}
     }
 
+    @Test
+    public void getBase() {
+        assertEquals(URI.create("/foo/bar/baz"), URLUtils.getBase(URI.create("/foo/bar/baz"), URI.create("/foo/bar/baz")));
+        assertEquals(URI.create("/foo/bar/"), URLUtils.getBase(URI.create("/foo/bar/baz"), URI.create("/foo/bar")));
+        assertEquals(URI.create("/foo/bar/"), URLUtils.getBase(URI.create("/foo/bar"), URI.create("/foo/bar/baz")));
+        assertEquals(null, URLUtils.getBase(URI.create("/foo/bar"), URI.create("/")));
+        assertEquals(null, URLUtils.getBase(URI.create("/foo/bar"), URI.create("/")));
+    }
+
 }

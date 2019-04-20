@@ -29,8 +29,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import javax.xml.namespace.QName;
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
@@ -102,7 +100,7 @@ public abstract class AbstractReaderModule extends AbstractPipelineModuleImpl {
     ExportAnchorsFilter exportAnchorsFilter;
     boolean validate = true;
     ContentHandler nullHandler;
-    private TempFileNameScheme tempFileNameScheme;
+    TempFileNameScheme tempFileNameScheme;
     /** Absolute path to input file. */
     @Deprecated
     URI rootFile;
@@ -302,7 +300,7 @@ public abstract class AbstractReaderModule extends AbstractPipelineModuleImpl {
                         .map(f -> f.resolve("."))
                         .reduce(rootFiles.get(0).resolve("."), (left, right) -> URLUtils.getBase(left, right));
             }
-            rootFile = baseInputDir.resolve("_dummy");
+            rootFile = baseInputDir.resolve("_dummy.ditamap");
             job.setInputFile(rootFile);
             job.setInputDir(baseInputDir);
         } else {
@@ -653,7 +651,6 @@ public abstract class AbstractReaderModule extends AbstractPipelineModuleImpl {
     void outputResult() throws DITAOTException {
         tempFileNameScheme.setBaseDir(baseInputDir);
 
-        // assume empty Job
         final URI rootTemp = tempFileNameScheme.generateTempFileName(rootFile);
         final File relativeRootFile = toFile(rootTemp);
 
@@ -769,14 +766,23 @@ public abstract class AbstractReaderModule extends AbstractPipelineModuleImpl {
             }
         }
 
-        for (final URI f : rootFiles) {
-            final FileInfo root = job.getFileInfo(f);
-            if (root == null) {
-                throw new RuntimeException("Unable to set input file to job configuration");
-            }
+        if (rootFiles.size() == 1) {
+            final FileInfo root = job.getFileInfo(rootTemp);
             job.add(new FileInfo.Builder(root)
                     .isInput(true)
                     .build());
+        } else {
+            for (final URI f : rootFiles) {
+                final FileInfo root = job.getFileInfo(f);
+                if (root == null) {
+                    throw new RuntimeException("Unable to set input file to job configuration");
+                }
+                job.add(new FileInfo.Builder(root)
+                        .uri(rootTemp)
+                        .format(ATTR_FORMAT_VALUE_DITAMAP)
+                        .isInput(true)
+                        .build());
+            }
         }
 
         try {

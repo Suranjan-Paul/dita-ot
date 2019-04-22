@@ -102,9 +102,9 @@ public abstract class AbstractReaderModule extends AbstractPipelineModuleImpl {
     ContentHandler nullHandler;
     TempFileNameScheme tempFileNameScheme;
     /** Absolute path to input file. */
-    @Deprecated
     URI rootFile;
     List<URI> resources;
+    /** List of absolute input files. */
     List<URI> rootFiles;
     /** Subject scheme absolute file paths. */
     private final Set<URI> schemeSet = new HashSet<>(128);
@@ -289,7 +289,9 @@ public abstract class AbstractReaderModule extends AbstractPipelineModuleImpl {
                         .map(f -> f.resolve("."))
                         .reduce(rootFiles.get(0).resolve("."), (left, right) -> URLUtils.getBase(left, right));
             }
-            rootFile = baseInputDir.resolve(ReaderUtils.GEN_MAP);
+            rootFile = rootFiles.size() == 1
+                    ? rootFiles.get(0)
+                    : baseInputDir.resolve(ReaderUtils.GEN_MAP);
             job.setInputFile(rootFile);
             job.setInputDir(baseInputDir);
         } else {
